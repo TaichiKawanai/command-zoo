@@ -1,0 +1,92 @@
+[
+  {
+    "group": "zcmd",
+    "description": "The commands provide git-command-like alias.\nThis is an example commands.",
+    "commands": [
+      {
+        "cmd": "print",
+        "desc": "print message",
+        "line": "",
+        "args": [
+          {
+            "arg": "hello",
+            "desc": "",
+            "line": "echo 'hello!!'"
+          },
+          {
+            "arg": "goodbye",
+            "desc": "",
+            "line": "echo 'goodbye!!'"
+          }
+        ]
+      },
+      {
+        "cmd": "ls",
+        "desc": "show files",
+        "line": "",
+        "args": [
+          {
+            "arg": "home",
+            "desc": "show files in home",
+            "line": "ls -la ~/"
+          },
+          {
+            "arg": "document",
+            "desc": "show files in documents",
+            "line": "ls -la ~/Documents/"
+          }
+        ]
+      },
+      {
+        "cmd": "help",
+        "desc": "show help",
+        "line": "zcmd -h"
+      }
+    ]
+  },
+  {
+    "group": "zcmd2",
+    "description": "The commands provide git-command-like alias.\nThis is an example commands.",
+    "commands": [
+      {
+        "cmd": "print",
+        "desc": "print message",
+        "line": "",
+        "args": [
+          {
+            "arg": "hello",
+            "desc": "",
+            "line": "echo 'hello!!'"
+          },
+          {
+            "arg": "goodbye",
+            "desc": "",
+            "line": "echo 'goodbye!!'"
+          }
+        ]
+      },
+      {
+        "cmd": "ls",
+        "desc": "show files",
+        "line": "",
+        "args": [
+          {
+            "arg": "home",
+            "desc": "show files in home",
+            "line": "ls -la ~/"
+          },
+          {
+            "arg": "document",
+            "desc": "show files in documents",
+            "line": "ls -la ~/Documents/"
+          }
+        ]
+      },
+      {
+        "cmd": "help",
+        "desc": "show help",
+        "line": "zcmd2 -h"
+      }
+    ]
+  }
+]

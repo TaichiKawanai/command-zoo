@@ -4,9 +4,10 @@ import argparse
 import difflib
 import json
 import os
+import pathlib
 import subprocess
-from subprocess import PIPE
 import sys
+from subprocess import PIPE
 
 
 def AplyArgParser(group, desc, help_epilog_str, json_file_path):
@@ -98,9 +99,7 @@ def ReadCommandSetting(command_list_json):
         temp_str = f"{cmd_k}"
         if cmd_desc:
             temp_str += f" ({cmd_desc})"
-        help_epilog_str += (
-            f"{list(commands.keys()).index(cmd_k) + 1}) {temp_str:{max_arg + max_desc + 9}}"
-        )
+        help_epilog_str += f"{list(commands.keys()).index(cmd_k) + 1}) {temp_str:{max_arg + max_desc + 9}}"
         if cmd_line:
             help_epilog_str += f"--> {cmd_line}\n"
         else:
@@ -117,8 +116,14 @@ def ReadCommandSetting(command_list_json):
 
 
 def main():
-    home_dir = os.path.expanduser("~")
-    command_list_json = f"{home_dir}/projects/commands/list.json"
+    #home_dir = os.path.expanduser("~")
+    json_parent = pathlib.Path(f"{__file__}").parent
+    json_stem = pathlib.Path(f"{__file__}").stem
+    command_list_json = f"{json_parent}/{json_stem}.json"
+    if not os.path.exists(command_list_json):
+        error_message = f"conf json {command_list_json} does not exists"
+        sys.exit(error_message)
+
     commands, group, discription, help_epilog_str = ReadCommandSetting(
         command_list_json
     )
