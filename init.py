@@ -48,6 +48,13 @@ def ParseArgs():
         help="update by interactive",
     )
     argparser.add_argument(
+        "-s",
+        "--show_commands",
+        action="store_true",
+        required=False,
+        help="show command usages.",
+    )
+    argparser.add_argument(
         "--verbose",
         action="store_true",
         required=False,
@@ -251,22 +258,29 @@ def ShowCommandFileStatusListSummary(cmd_status_list):
 
 
 def ShowSettingRecommendation(user_dir):
-    is_not_ok_PATH = not user_dir in str(os.environ.get("PATH"))
-    is_zsh = "zsh" in str(os.environ.get("SHELL"))
+    is_ok_PATH = (user_dir in str(os.environ.get("PATH")))
 
-    if is_not_ok_PATH or is_zsh:
+    is_ok_fpath = False
+    if "zsh" in str(os.environ.get("SHELL")):
+        proc = subprocess.run([f"./get_fpath.zsh"], shell=True, stdout=PIPE, stderr=PIPE, text=True)
+        is_ok_fpath = (user_dir in proc.stdout)
+    else:
+        is_ok_fpath = True
+
+    if not is_ok_PATH or not is_ok_fpath:
         print("[INFO] One more step!!!")
-        if is_not_ok_PATH:
-            print(
-                "[INFO] Please add below lines to ~/.bashrc or ~/.zshrc or  ~/.zshenv .."
-            )
-            print("#Setting commands")
-            print(f'export PATH="{user_dir}:$PATH"')
 
-        if is_zsh:
-            print("[INFO] Please add below lines to ~/.zshrc or  ~/.zshenv.")
-            print(f"fpath=({user_dir} $fpath)")
-            print("autoload -Uz compinit && compinit")
+    if not is_ok_PATH:
+        print(
+            "[INFO] Please add below lines to ~/.bashrc or ~/.zshrc or  ~/.zshenv .."
+        )
+        print("#Setting commands")
+        print(f'export PATH="{user_dir}:$PATH"')
+
+    if not is_ok_fpath:
+        print("[INFO] Please add below lines to ~/.zshrc or  ~/.zshenv.")
+        print(f"fpath=({user_dir} $fpath)")
+        print("autoload -Uz compinit && compinit")
     return
 
 
@@ -276,6 +290,8 @@ def main():
         prog = str(Path(sys.argv[0]).stem)
         print(f"{prog}: version 0.0")
         return 0
+    if args.show_commands:
+        args.check_only = True
 
     json_load_list = LoadJsonFile(f"./conf.json")
 
@@ -330,6 +346,16 @@ def main():
     ShowCommandFileStatusListSummary(cmd_status_list)
     if not args.check_only:
         ShowSettingRecommendation(user_dir)
+
+    if args.show_commands:
+        for group in sorted(cmd_status_list.keys()):
+            if cmd_status_list[group].availability == CommandAvailability.Available:
+                group_bold = f"\033[1m{group}\033[0m"
+                print(f"------------------ {group_bold} ------------------\n")
+                subprocess.run(
+                    [f"{user_dir}/{group} -h"], shell=True
+                )
+                print()
 
     return 0
 
