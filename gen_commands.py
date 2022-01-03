@@ -143,10 +143,10 @@ def FetchCommandFileStatusMap(user_dir):
     return cmd_status_list
 
 
-def LinkExecuteFile(parent_dir, user_exec_link_file):
+def LinkExecuteFile(src_dir, user_exec_link_file):
     print(f"[INFO]     ==>  exec link  : \033[34m{user_exec_link_file}\033[0m")
     subprocess.run(
-        [f"ln -snf {parent_dir}/commands.py {user_exec_link_file}"], shell=True
+        [f"ln -snf {src_dir}/commands.py {user_exec_link_file}"], shell=True
     )
     return
 
@@ -158,23 +158,23 @@ def DumpCommandJson(json_load, user_json_file):
     return
 
 
-def GenerateZshFunction(parent_dir, group, json_load, user_zsh_func_file):
+def GenerateZshFunction(src_dir, group, json_load, user_zsh_func_file):
     print(f"[INFO]     ==>  zsh func   : \033[34m{user_zsh_func_file}\033[0m")
-    env = Environment(loader=FileSystemLoader(str(parent_dir)))
+    env = Environment(loader=FileSystemLoader(str(src_dir)))
     template = env.get_template(f"zsh_func.tpl")
     zsh_func = template.render({"group": group, "commands": json_load["commands"]})
     with open(user_zsh_func_file, mode="wt", encoding="utf-8") as file:
         file.write(zsh_func)
     return
 
-def GenerateTargetCommand(cmd_status_list, parent_dir, user_dir, json_load):
+def GenerateTargetCommand(cmd_status_list, src_dir, user_dir, json_load):
     for group in cmd_status_list.keys():
         if cmd_status_list[group].target == CommandTarget.Target:
             group_bold = f"\033[1m{group}\033[0m"
             print(f"[INFO] Generate command group: {group_bold}")
-            LinkExecuteFile(parent_dir, f"{user_dir}/{group}")
+            LinkExecuteFile(src_dir, f"{user_dir}/{group}")
             DumpCommandJson(json_load, f"{user_dir}/{group}.json")
-            GenerateZshFunction(parent_dir, group, json_load, f"{user_dir}/_{group}")
+            GenerateZshFunction(src_dir, group, json_load, f"{user_dir}/_{group}")
             if CheckAvailability(user_dir, group):
                 print(f"[INFO] Complete.\n")
             else:
@@ -257,12 +257,12 @@ def ShowCommandFileStatusListSummary(cmd_status_list):
     return
 
 
-def ShowSettingRecommendation(user_dir):
+def ShowSettingRecommendation(user_dir, src_dir):
     is_ok_PATH = (user_dir in str(os.environ.get("PATH")))
 
     is_ok_fpath = False
     if "zsh" in str(os.environ.get("SHELL")):
-        proc = subprocess.run([f"./get_fpath.zsh"], shell=True, stdout=PIPE, stderr=PIPE, text=True)
+        proc = subprocess.run([f"{src_dir}/get_fpath.zsh"], shell=True, stdout=PIPE, stderr=PIPE, text=True)
         is_ok_fpath = (user_dir in proc.stdout)
     else:
         is_ok_fpath = True
@@ -283,19 +283,30 @@ def ShowSettingRecommendation(user_dir):
         print("autoload -Uz compinit && compinit")
     return
 
+def ShowCommandHelp(cmd_status_list, user_dir):
+    for group in sorted(cmd_status_list.keys()):
+        if cmd_status_list[group].availability == CommandAvailability.Available:
+            group_bold = f"\033[1m{group}\033[0m"
+            print(f"------------------ {group_bold} ------------------\n")
+            subprocess.run(
+                [f"{user_dir}/{group} -h"], shell=True
+            )
+            print()
+    return
+
 
 def main():
     args = ParseArgs()
+    if args.show_commands:
+        args.check_only = True
+
     if args.version:
         prog = str(Path(sys.argv[0]).stem)
         print(f"{prog}: version 0.0")
         return 0
-    if args.show_commands:
-        args.check_only = True
-
-    json_load_list = LoadJsonFile(f"./conf.json")
 
     parent_dir = pathlib.Path(os.path.abspath(__file__)).parent
+    src_dir = f"{parent_dir}/src"
     user_dir = f"{parent_dir}/user"
     if not args.check_only:
         CheckUserDirectory(user_dir, args.verbose)
@@ -304,6 +315,7 @@ def main():
         if not CheckAvailability(user_dir, group):
             cmd_status_list[group].availability = CommandAvailability.Broken
 
+    json_load_list = LoadJsonFile(f"{parent_dir}/commands.json")
     for json_load in json_load_list:
         group = json_load["group"]
 
@@ -325,7 +337,7 @@ def main():
             cmd_status_list[group].target = CommandTarget.Target
             cmd_status_list[group].update_state = CommandUpdateState.New
 
-    GenerateTargetCommand(cmd_status_list, parent_dir, user_dir, json_load)
+    GenerateTargetCommand(cmd_status_list, src_dir, user_dir, json_load)
 
     if args.remove:
         for group in cmd_status_list.keys():
@@ -335,7 +347,6 @@ def main():
                 if not args.interactive or yes_or_no(ask_str):
                     cmd_status_list[group].target = CommandTarget.RemoveTarget
                     cmd_status_list[group].update_state = CommandUpdateState.Removed
-
         EraceTargetCommand(cmd_status_list, user_dir)
 
     for group in cmd_status_list.keys():
@@ -345,17 +356,9 @@ def main():
     ShowCommandGenerationResult(cmd_status_list, args.verbose)
     ShowCommandFileStatusListSummary(cmd_status_list)
     if not args.check_only:
-        ShowSettingRecommendation(user_dir)
-
+        ShowSettingRecommendation(user_dir, src_dir)
     if args.show_commands:
-        for group in sorted(cmd_status_list.keys()):
-            if cmd_status_list[group].availability == CommandAvailability.Available:
-                group_bold = f"\033[1m{group}\033[0m"
-                print(f"------------------ {group_bold} ------------------\n")
-                subprocess.run(
-                    [f"{user_dir}/{group} -h"], shell=True
-                )
-                print()
+        ShowCommandHelp(cmd_status_list, user_dir)
 
     return 0
 
