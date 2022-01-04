@@ -139,7 +139,9 @@ def CheckUserDirectory(user_dir, verbose):
         print(f"[INFO] mkdir \033[34m{os.path.abspath(user_zsh_func_dir)}\033[0m")
         os.makedirs(user_zsh_func_dir)
     elif verbose:
-        print(f"[INFO] \033[34m{os.path.abspath(user_zsh_func_dir)}\033[0m already exsits.")
+        print(
+            f"[INFO] \033[34m{os.path.abspath(user_zsh_func_dir)}\033[0m already exsits."
+        )
     return
 
 
@@ -168,9 +170,7 @@ def LinkExecuteFile(src_dir, user_exec_link_file):
         if link_path_old == f"{src_dir}/commands.py":
             return False
     print(f"[INFO]     ==>  exec link  : \033[34m{user_exec_link_file}\033[0m")
-    subprocess.run(
-        [f"ln -snf {src_dir}/commands.py {user_exec_link_file}"], shell=True
-    )
+    subprocess.run([f"ln -snf {src_dir}/commands.py {user_exec_link_file}"], shell=True)
     return True
 
 
@@ -191,7 +191,7 @@ def GenerateZshFunction(src_dir, group, json_load, user_zsh_func_file):
     zsh_func = template.render({"group": group, "commands": json_load["commands"]})
 
     if os.path.exists(user_zsh_func_file):
-        f = open(user_zsh_func_file, 'r', encoding='UTF-8')
+        f = open(user_zsh_func_file, "r", encoding="UTF-8")
         zsh_func_old = f.read()
         if zsh_func_old == zsh_func:
             return False
@@ -201,25 +201,33 @@ def GenerateZshFunction(src_dir, group, json_load, user_zsh_func_file):
         file.write(zsh_func)
     return True
 
+
 def GenerateTargetCommand(group, src_dir, user_dir, json_load):
     group_bold = f"\033[1m{group}\033[0m"
     print(f"[INFO] Generate command group: {group_bold}")
     is_generated = False
     is_generated |= LinkExecuteFile(src_dir, f"{user_dir}/{group}")
     is_generated |= DumpCommandJson(json_load, f"{user_dir}/json/{group}.json")
-    is_generated |= GenerateZshFunction(src_dir, group, json_load, f"{user_dir}/zsh_func/_{group}")
+    is_generated |= GenerateZshFunction(
+        src_dir, group, json_load, f"{user_dir}/zsh_func/_{group}"
+    )
 
     if not is_generated:
         if CheckAvailability(user_dir, group):
             print(f"[INFO] \033[33mNo change.\033[0m\n")
         else:
-            print(f"[WARNING] \033[33mExistent command is invalid\033[0m: {group_bold}.\n")
+            print(
+                f"[WARNING] \033[33mExistent command is invalid\033[0m: {group_bold}.\n"
+            )
     else:
         if CheckAvailability(user_dir, group):
             print(f"[INFO] \033[36mComplete.\033[0m\n")
         else:
-            print(f"[WARNING] \033[33mFailed to generate command\033[0m: {group_bold}.\n")
+            print(
+                f"[WARNING] \033[33mFailed to generate command\033[0m: {group_bold}.\n"
+            )
     return is_generated
+
 
 def EraceTargetCommand(group, user_dir):
     print(f"[INFO] Remove {group}")
@@ -230,6 +238,7 @@ def EraceTargetCommand(group, user_dir):
     if os.path.exists(f"{user_dir}/zsh_func/_{group}"):
         os.remove(f"{user_dir}/zsh_func/_{group}")
     return
+
 
 def ShowCommandGenerationResult(cmd_status_list, verbose):
     generated_cmd_list = []
@@ -252,9 +261,10 @@ def ShowCommandGenerationResult(cmd_status_list, verbose):
         print("[INFO] Nothing to generate.\n")
 
 
-
 def ShowCommandFileStatusListSummary(cmd_status_list):
-    cmd_status_label_str = "               " + "(avalable)  " + "(config)    " + "(state)"
+    cmd_status_label_str = (
+        "               " + "(avalable)  " + "(config)    " + "(state)"
+    )
     print(cmd_status_label_str)
     cmd_status_list_sorted = sorted(cmd_status_list.items())
     for group, cmd_status in cmd_status_list_sorted:
@@ -296,6 +306,7 @@ def ShowCommandFileStatusListSummary(cmd_status_list):
     print()
     return
 
+
 def ShowPathSettingSummary(is_ok_PATH, is_ok_fpath):
     path_str = "\033[32mOK\033[0m" if is_ok_PATH else "\033[31mX\033[0m"
     fpath_str = "\033[32mOK\033[0m" if is_ok_fpath else "\033[31mX\033[0m"
@@ -303,27 +314,34 @@ def ShowPathSettingSummary(is_ok_PATH, is_ok_fpath):
     print(f"export zsh fpath : {fpath_str}\n")
     return
 
+
 def CheckEnvPath(user_dir):
-    is_ok_PATH = (user_dir in str(os.environ.get("PATH")))
+    is_ok_PATH = user_dir in str(os.environ.get("PATH"))
     return is_ok_PATH
+
 
 def CheckZshFPATH(user_dir, src_dir):
     is_ok_fpath = False
     if "zsh" in str(os.environ.get("SHELL")):
-        proc = subprocess.run([f"{src_dir}/get_fpath.zsh"], shell=True, stdout=PIPE, stderr=PIPE, text=True)
-        is_ok_fpath = (f"{user_dir}/zsh_func" in proc.stdout)
+        proc = subprocess.run(
+            [f"{src_dir}/get_fpath.zsh"],
+            shell=True,
+            stdout=PIPE,
+            stderr=PIPE,
+            text=True,
+        )
+        is_ok_fpath = f"{user_dir}/zsh_func" in proc.stdout
     else:
         is_ok_fpath = True
     return is_ok_fpath
+
 
 def ShowSettingRecommendation(is_ok_PATH, is_ok_fpath, user_dir):
     if not is_ok_PATH or not is_ok_fpath:
         print("[INFO] One more step!!!")
 
     if not is_ok_PATH:
-        print(
-            "[INFO] Please add below lines to ~/.bashrc or ~/.zshrc or  ~/.zshenv .."
-        )
+        print("[INFO] Please add below lines to ~/.bashrc or ~/.zshrc or  ~/.zshenv ..")
         print("#Setting commands")
         print(f'export PATH="{user_dir}:$PATH"')
 
@@ -333,14 +351,13 @@ def ShowSettingRecommendation(is_ok_PATH, is_ok_fpath, user_dir):
         print("autoload -Uz compinit && compinit")
     return
 
+
 def ShowCommandHelp(cmd_status_list, user_dir):
     for group in sorted(cmd_status_list.keys()):
         if cmd_status_list[group].availability == CommandAvailability.Available:
             group_bold = f"\033[1m{group}\033[0m"
             print(f"------------------ {group_bold} ------------------\n")
-            subprocess.run(
-                [f"{user_dir}/{group} -h"], shell=True
-            )
+            subprocess.run([f"{user_dir}/{group} -h"], shell=True)
             print()
     return
 
@@ -402,7 +419,9 @@ def main():
             ask_str = f"[INFO] {group_bold} already exists. Do you want to update?"
             if not args.interactive or yes_or_no(ask_str):
                 cmd_status_list[group].update_state = CommandUpdateState.Updated
-                is_generated = GenerateTargetCommand(group, src_dir, user_dir, json_load)
+                is_generated = GenerateTargetCommand(
+                    group, src_dir, user_dir, json_load
+                )
         else:
             cmd_status_list[group].update_state = CommandUpdateState.New
             is_generated = GenerateTargetCommand(group, src_dir, user_dir, json_load)
@@ -414,7 +433,9 @@ def main():
         for group in cmd_status_list.keys():
             if not cmd_status_list[group].has_config:
                 group_bold = f"\033[1m{group}\033[0m"
-                ask_str = f"[INFO] {group_bold} has no config. Do you remove {group_bold}?"
+                ask_str = (
+                    f"[INFO] {group_bold} has no config. Do you remove {group_bold}?"
+                )
                 if not args.interactive or yes_or_no(ask_str):
                     cmd_status_list[group].update_state = CommandUpdateState.Removed
                     EraceTargetCommand(group, user_dir)

@@ -74,7 +74,9 @@ def ReadCommandSetting(command_list_json):
         sys.exit(error_message)
     group = json_load["group"]
 
-    discription = json_load["description"] if ("description"  in json_load.keys()) else ""
+    discription = (
+        json_load["description"] if ("description" in json_load.keys()) else ""
+    )
 
     if not "commands" in json_load.keys():
         error_message = f"'commands' key is required. \nPlease fix {command_list_json}."
@@ -87,14 +89,22 @@ def ReadCommandSetting(command_list_json):
             for arg_elem in command_elem["args"]:
                 if "arg" in arg_elem:
                     key = arg_elem["arg"]
-                    arg_elem_desc = arg_elem["desc"] if ("desc" in arg_elem.keys()) else ""
-                    arg_elem_line = arg_elem["line"] if ("line" in arg_elem.keys()) else ""
+                    arg_elem_desc = (
+                        arg_elem["desc"] if ("desc" in arg_elem.keys()) else ""
+                    )
+                    arg_elem_line = (
+                        arg_elem["line"] if ("line" in arg_elem.keys()) else ""
+                    )
                     args[key] = arg_elem_desc, arg_elem_line
 
         if "cmd" in command_elem.keys():
             cmd = command_elem["cmd"]
-            command_elem_desc = command_elem["desc"] if ("desc" in command_elem.keys()) else ""
-            command_elem_line = command_elem["line"] if ("line" in command_elem.keys()) else ""
+            command_elem_desc = (
+                command_elem["desc"] if ("desc" in command_elem.keys()) else ""
+            )
+            command_elem_line = (
+                command_elem["line"] if ("line" in command_elem.keys()) else ""
+            )
 
             if not args and not command_elem_line:
                 continue
@@ -135,7 +145,7 @@ def ReadCommandSetting(command_list_json):
 
 
 def main():
-    #home_dir = os.path.expanduser("~")
+    # home_dir = os.path.expanduser("~")
     json_parent = pathlib.Path(f"{__file__}").parent
     json_stem = pathlib.Path(f"{__file__}").stem
     command_list_json = f"{json_parent}/json/{json_stem}.json"
@@ -161,7 +171,9 @@ def main():
         sys.exit(error_message)
 
     cmd_line = commands[params.command][1]
-    is_only_cmd = cmd_line and (not params.argument or not params.argument[0] in commands[params.command][2])
+    is_only_cmd = cmd_line and (
+        not params.argument or not params.argument[0] in commands[params.command][2]
+    )
 
     if is_only_cmd:
         cmd_line_with_arg = cmd_line
