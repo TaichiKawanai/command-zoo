@@ -1,0 +1,5 @@
+# exclude user dir
+/user/
+
+# exclide user commands.json
+/commands.json
