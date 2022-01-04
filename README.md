@@ -8,6 +8,7 @@
   - [Command structure](#command-structure)
   - [Example of input json file](#example-of-input-json-file)
   - [Handle commnad group](#handle-commnad-group)
+  - [Uninstall command group](#uninstall-command-group)
 
 # Features
 
@@ -175,3 +176,7 @@ argument_2a  argument_2b
 
 
 Please run `./gen_commands.py -h` for more details.
+
+## Uninstall command group
+1. Run `./gen_commands.py --uninstall` to remove user directory.
+2. Unexport `Path` and `fpath`.

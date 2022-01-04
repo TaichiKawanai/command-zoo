@@ -42,6 +42,12 @@ def ParseArgs():
         help="only check command status",
     )
     argparser.add_argument(
+        "--uninstall",
+        action="store_true",
+        required=False,
+        help="uninstall, remove all user commands",
+    )
+    argparser.add_argument(
         "-r",
         "--remove",
         action="store_true",
@@ -383,6 +389,14 @@ def main():
     parent_dir = pathlib.Path(os.path.abspath(__file__)).parent
     src_dir = f"{parent_dir}/src"
     user_dir = f"{parent_dir}/user"
+
+    if args.uninstall:
+        if os.path.exists(user_dir):
+            print(f"[INFO] Remove: \033[34m{user_dir}\033[0m.")
+            shutil.rmtree(user_dir)
+        else:
+            print(f"[INFO] Not installed: \033[34m{user_dir}\033[0m.")
+        return 0
 
     json_file_path = f"{parent_dir}/commands.json"
     if args.json:
