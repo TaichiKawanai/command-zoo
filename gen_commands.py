@@ -102,7 +102,15 @@ def IsJson(json_str):
 def LoadJsonFile(command_list_json):
     if not IsJson(command_list_json):
         error_message = f"\033[31m{command_list_json} is not json format.\033[0m \n"
-        error_message += f"Please fix \033[34m{command_list_json}\033[0m."
+        error_message += f"Please fix \033[34m{command_list_json}\033[0m.\n"
+        proc = subprocess.run(
+            [f"jq . {command_list_json}"],
+            shell=True,
+            stdout=PIPE,
+            stderr=PIPE,
+            text=True,
+        )
+        error_message += proc.stderr
         sys.exit(error_message)
     json_open = open(command_list_json, "r")
     json_load_list = json.load(json_open)
