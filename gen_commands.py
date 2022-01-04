@@ -76,16 +76,9 @@ class CommandUpdateState(Enum):
     Removed = auto()
 
 
-class CommandTarget(Enum):
-    NoTarget = auto()
-    Target = auto()
-    RemoveTarget = auto()
-
-
 class CommandFileStatus:
     availability = CommandAvailability.Empty
     update_state = CommandUpdateState.NoChange
-    target = CommandTarget.NoTarget
     has_config = False
 
 
@@ -100,7 +93,8 @@ def IsJson(json_str):
 
 def LoadJsonFile(command_list_json):
     if not IsJson(command_list_json):
-        error_message = f"'{command_list_json}' is not json format. \nPlease fix {command_list_json}."
+        error_message = f"'\033[34m{command_list_json}\033[0m' is not json format. \n"
+        error_message += f"Please fix \033[34m{command_list_json}\033[34m."
         sys.exit(error_message)
     json_open = open(command_list_json, "r")
     json_load_list = json.load(json_open)
@@ -125,11 +119,26 @@ def CheckUserDirectory(user_dir, verbose):
     elif verbose:
         print(f"[INFO] \033[34m{os.path.abspath(user_dir)}\033[0m already exsits.")
 
+    user_json_dir = f"{user_dir}/json"
+    if not os.path.isdir(user_json_dir):
+        print(f"[INFO] mkdir \033[34m{os.path.abspath(user_json_dir)}\033[0m")
+        os.makedirs(user_json_dir)
+    elif verbose:
+        print(f"[INFO] \033[34m{os.path.abspath(user_json_dir)}\033[0m already exsits.")
+
+    user_zsh_func_dir = f"{user_dir}/zsh_func"
+    if not os.path.isdir(user_zsh_func_dir):
+        print(f"[INFO] mkdir \033[34m{os.path.abspath(user_zsh_func_dir)}\033[0m")
+        os.makedirs(user_zsh_func_dir)
+    elif verbose:
+        print(f"[INFO] \033[34m{os.path.abspath(user_zsh_func_dir)}\033[0m already exsits.")
+    return
+
 
 def CheckAvailability(user_dir, group):
     if os.path.exists(f"{user_dir}/{group}"):
-        if os.path.exists(f"{user_dir}/{group}.json"):
-            if os.path.exists(f"{user_dir}/_{group}"):
+        if os.path.exists(f"{user_dir}/json/{group}.json"):
+            if os.path.exists(f"{user_dir}/zsh_func/_{group}"):
                 return True
     return False
 
@@ -137,59 +146,82 @@ def CheckAvailability(user_dir, group):
 def FetchCommandFileStatusMap(user_dir):
     cmd_status_list = {}
     for file_path in list(Path(user_dir).glob("*")):
-        stem = str(Path(file_path).stem).replace("_", "")
+        if os.path.isdir(file_path):
+            continue
+        stem = str(Path(file_path).stem).lstrip("_")
         if not stem in cmd_status_list.keys():
             cmd_status_list[stem] = CommandFileStatus()
     return cmd_status_list
 
 
 def LinkExecuteFile(src_dir, user_exec_link_file):
+    if os.path.exists(user_exec_link_file):
+        link_path_old = os.readlink(user_exec_link_file)
+        if link_path_old == f"{src_dir}/commands.py":
+            return False
     print(f"[INFO]     ==>  exec link  : \033[34m{user_exec_link_file}\033[0m")
     subprocess.run(
         [f"ln -snf {src_dir}/commands.py {user_exec_link_file}"], shell=True
     )
-    return
+    return True
 
 
 def DumpCommandJson(json_load, user_json_file):
+    if os.path.exists(user_json_file):
+        json_load_old = LoadJsonFile(user_json_file)
+        if json_load_old == json_load:
+            return False
     print(f"[INFO]     ==>  conf. json : \033[34m{user_json_file}\033[0m")
     with open(user_json_file, mode="wt", encoding="utf-8") as file:
         json.dump(json_load, file, ensure_ascii=False, indent=2)
-    return
+    return True
 
 
 def GenerateZshFunction(src_dir, group, json_load, user_zsh_func_file):
-    print(f"[INFO]     ==>  zsh func   : \033[34m{user_zsh_func_file}\033[0m")
     env = Environment(loader=FileSystemLoader(str(src_dir)))
     template = env.get_template(f"zsh_func.tpl")
     zsh_func = template.render({"group": group, "commands": json_load["commands"]})
+
+    if os.path.exists(user_zsh_func_file):
+        f = open(user_zsh_func_file, 'r', encoding='UTF-8')
+        zsh_func_old = f.read()
+        if zsh_func_old == zsh_func:
+            return False
+
+    print(f"[INFO]     ==>  zsh func   : \033[34m{user_zsh_func_file}\033[0m")
     with open(user_zsh_func_file, mode="wt", encoding="utf-8") as file:
         file.write(zsh_func)
-    return
+    return True
 
-def GenerateTargetCommand(cmd_status_list, src_dir, user_dir, json_load):
-    for group in cmd_status_list.keys():
-        if cmd_status_list[group].target == CommandTarget.Target:
-            group_bold = f"\033[1m{group}\033[0m"
-            print(f"[INFO] Generate command group: {group_bold}")
-            LinkExecuteFile(src_dir, f"{user_dir}/{group}")
-            DumpCommandJson(json_load, f"{user_dir}/{group}.json")
-            GenerateZshFunction(src_dir, group, json_load, f"{user_dir}/_{group}")
-            if CheckAvailability(user_dir, group):
-                print(f"[INFO] Complete.\n")
-            else:
-                print(f"[\033[31mERROR\033[0m] Failed to generate command: {group}.\n")
-    return
+def GenerateTargetCommand(group, src_dir, user_dir, json_load):
+    group_bold = f"\033[1m{group}\033[0m"
+    print(f"[INFO] Generate command group: {group_bold}")
+    is_generated = False
+    is_generated |= LinkExecuteFile(src_dir, f"{user_dir}/{group}")
+    is_generated |= DumpCommandJson(json_load, f"{user_dir}/json/{group}.json")
+    is_generated |= GenerateZshFunction(src_dir, group, json_load, f"{user_dir}/zsh_func/_{group}")
 
-def EraceTargetCommand(cmd_status_list, user_dir):
-    for group in cmd_status_list.keys():
-        if cmd_status_list[group].target == CommandTarget.RemoveTarget:
-            print(f"[INFO] Remove {group}")
-            os.remove(f"{user_dir}/{group}")
-            os.remove(f"{user_dir}/{group}.json")
-            os.remove(f"{user_dir}/_{group}")
+    if not is_generated:
+        if CheckAvailability(user_dir, group):
+            print(f"[INFO] \033[33mNo change.\033[0m\n")
         else:
-            print()
+            print(f"[\033[31mERROR\033[0m] Existent command is invalid: {group_bold}.\n")
+    else:
+        if CheckAvailability(user_dir, group):
+            print(f"[INFO] \033[36mComplete.\033[0m\n")
+        else:
+            print(f"[\033[31mERROR\033[0m] Failed to generate command: {group_bold}.\n")
+    return is_generated
+
+def EraceTargetCommand(group, user_dir):
+    print(f"[INFO] Remove {group}")
+    if os.path.exists(f"{user_dir}/{group}"):
+        os.remove(f"{user_dir}/{group}")
+    if os.path.exists(f"{user_dir}/json/{group}.json"):
+        os.remove(f"{user_dir}/json/{group}.json")
+    if os.path.exists(f"{user_dir}/zsh_func/_{group}"):
+        os.remove(f"{user_dir}/zsh_func/_{group}")
+    return
 
 def ShowCommandGenerationResult(cmd_status_list, verbose):
     generated_cmd_list = []
@@ -210,12 +242,11 @@ def ShowCommandGenerationResult(cmd_status_list, verbose):
         print(f"       ==> \033[1m{cmds_str}\033[0m\n")
     elif verbose:
         print("[INFO] Nothing to generate.\n")
-    else:
-        print()
+
 
 
 def ShowCommandFileStatusListSummary(cmd_status_list):
-    cmd_status_label_str = "         " + "(avalable)  " + "(config)    " + "(state)  　"
+    cmd_status_label_str = "               " + "(avalable)  " + "(config)    " + "(state)"
     print(cmd_status_label_str)
     cmd_status_list_sorted = sorted(cmd_status_list.items())
     for group, cmd_status in cmd_status_list_sorted:
@@ -240,7 +271,8 @@ def ShowCommandFileStatusListSummary(cmd_status_list):
 
         state = ""
         if cmd_status.update_state == CommandUpdateState.NoChange:
-            state = ""
+            state = "no change"
+            state = f"\033[33m{state:<12}\033[0m"
         elif cmd_status.update_state == CommandUpdateState.Updated:
             state = "updated"
             state = f"\033[36m{state:<12}\033[0m"
@@ -251,22 +283,32 @@ def ShowCommandFileStatusListSummary(cmd_status_list):
             state = "removed"
             state = f"\033[31m{state:<12}\033[0m"
 
-        cmd_status_str = f"\033[1m{group:10}\033[0m" + availability + has_config + state
+        cmd_status_str = f"\033[1m{group:16}\033[0m" + availability + has_config + state
         print(cmd_status_str)
     print()
     return
 
+def ShowPathSettingSummary(is_ok_PATH, is_ok_fpath):
+    path_str = "\033[32mOK\033[0m" if is_ok_PATH else "\033[31mX\033[0m"
+    fpath_str = "\033[32mOK\033[0m" if is_ok_fpath else "\033[31mX\033[0m"
+    print(f"export PATH      : {path_str}")
+    print(f"export zsh fpath : {fpath_str}\n")
+    return
 
-def ShowSettingRecommendation(user_dir, src_dir):
+def CheckEnvPath(user_dir):
     is_ok_PATH = (user_dir in str(os.environ.get("PATH")))
+    return is_ok_PATH
 
+def CheckZshFPATH(user_dir, src_dir):
     is_ok_fpath = False
     if "zsh" in str(os.environ.get("SHELL")):
         proc = subprocess.run([f"{src_dir}/get_fpath.zsh"], shell=True, stdout=PIPE, stderr=PIPE, text=True)
-        is_ok_fpath = (user_dir in proc.stdout)
+        is_ok_fpath = (f"{user_dir}/zsh_func" in proc.stdout)
     else:
         is_ok_fpath = True
+    return is_ok_fpath
 
+def ShowSettingRecommendation(is_ok_PATH, is_ok_fpath, user_dir):
     if not is_ok_PATH or not is_ok_fpath:
         print("[INFO] One more step!!!")
 
@@ -279,7 +321,7 @@ def ShowSettingRecommendation(user_dir, src_dir):
 
     if not is_ok_fpath:
         print("[INFO] Please add below lines to ~/.zshrc or  ~/.zshenv.")
-        print(f"fpath=({user_dir} $fpath)")
+        print(f"fpath=({user_dir}/zsh_func $fpath)")
         print("autoload -Uz compinit && compinit")
     return
 
@@ -315,9 +357,18 @@ def main():
         if not CheckAvailability(user_dir, group):
             cmd_status_list[group].availability = CommandAvailability.Broken
 
-    json_load_list = LoadJsonFile(f"{parent_dir}/commands.json")
+    json_file_path = f"{parent_dir}/commands.json"
+    json_load_list = LoadJsonFile(json_file_path)
     for json_load in json_load_list:
+        if not "group" in json_load:
+            error_message = f"An item with no group exists in json input. \nPlease fix \033[34m{json_file_path}\033[0m."
+            sys.exit(error_message)
+
         group = json_load["group"]
+
+        if not "commands" in json_load or not json_load["commands"]:
+            error_message = f"No commands in {group}. \nPlease fix \033[34m{json_file_path}\033[0m."
+            sys.exit(error_message)
 
         is_existing = group in cmd_status_list
         if not is_existing:
@@ -327,17 +378,19 @@ def main():
         if args.check_only:
             continue
 
+        is_generated = False
         if is_existing:
             group_bold = f"\033[1m{group}\033[0m"
             ask_str = f"[INFO] {group_bold} already exists. Do you want to update?"
             if not args.interactive or yes_or_no(ask_str):
-                cmd_status_list[group].target = CommandTarget.Target
                 cmd_status_list[group].update_state = CommandUpdateState.Updated
+                is_generated = GenerateTargetCommand(group, src_dir, user_dir, json_load)
         else:
-            cmd_status_list[group].target = CommandTarget.Target
             cmd_status_list[group].update_state = CommandUpdateState.New
+            is_generated = GenerateTargetCommand(group, src_dir, user_dir, json_load)
 
-    GenerateTargetCommand(cmd_status_list, src_dir, user_dir, json_load)
+        if not is_generated:
+            cmd_status_list[group].update_state = CommandUpdateState.NoChange
 
     if args.remove:
         for group in cmd_status_list.keys():
@@ -345,18 +398,24 @@ def main():
                 group_bold = f"\033[1m{group}\033[0m"
                 ask_str = f"[INFO] {group_bold} has no config. Do you remove {group_bold}?"
                 if not args.interactive or yes_or_no(ask_str):
-                    cmd_status_list[group].target = CommandTarget.RemoveTarget
                     cmd_status_list[group].update_state = CommandUpdateState.Removed
-        EraceTargetCommand(cmd_status_list, user_dir)
+                    EraceTargetCommand(group, user_dir)
+                print()
 
     for group in cmd_status_list.keys():
         if CheckAvailability(user_dir, group):
             cmd_status_list[group].availability = CommandAvailability.Available
 
     ShowCommandGenerationResult(cmd_status_list, args.verbose)
+
+    is_ok_PATH = CheckEnvPath(user_dir)
+    is_ok_fpath = CheckZshFPATH(user_dir, src_dir)
     ShowCommandFileStatusListSummary(cmd_status_list)
+    ShowPathSettingSummary(is_ok_PATH, is_ok_fpath)
+
     if not args.check_only:
-        ShowSettingRecommendation(user_dir, src_dir)
+        ShowSettingRecommendation(is_ok_PATH, is_ok_fpath, user_dir)
+
     if args.show_commands:
         ShowCommandHelp(cmd_status_list, user_dir)
 
