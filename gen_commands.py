@@ -27,6 +27,13 @@ def ParseArgs():
         help="show version",
     )
     argparser.add_argument(
+        "-j",
+        "--json",
+        type=str,
+        required=False,
+        help="specify input json file",
+    )
+    argparser.add_argument(
         "-c",
         "--check_only",
         action="store_true",
@@ -358,6 +365,9 @@ def main():
             cmd_status_list[group].availability = CommandAvailability.Broken
 
     json_file_path = f"{parent_dir}/commands.json"
+    if args.json:
+        json_file_path = args.json
+
     if not os.path.exists(json_file_path):
         error_message = f"[ERROR] \033[31mNo input json.\033[0m\nPlease create \033[34m{json_file_path}\033[0m."
         sys.exit(error_message)
