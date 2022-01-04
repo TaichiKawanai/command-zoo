@@ -16,10 +16,13 @@
 
 # How to start
 
-1. Edit input json file `commands.json`. Details are shown in below.
-2. Run `gen_command.py`, which *python3.8* is required.
-3. Export path of command group directory to `PATH` (optional, but highly recommended)
-3. Export path of zsh functions directory to `fpath` (optional, if you use *zsh*)
+1. Run `gen_command.py` to generate initial input json file: `commands.json`.
+2. Edit `commands.json`. Details are shown in below.
+3. Run `gen_command.py` to generate execution files.
+4. Export path of command group directory to `PATH` (optional, but highly recommended)
+5. Export path of zsh functions directory to `fpath` (optional, if you use *zsh*)
+
+*`gen_command.py` requires *python3.8*.
 
 # Usage
 

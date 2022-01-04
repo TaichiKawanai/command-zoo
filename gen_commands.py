@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 from enum import Enum, auto
@@ -357,20 +358,23 @@ def main():
     parent_dir = pathlib.Path(os.path.abspath(__file__)).parent
     src_dir = f"{parent_dir}/src"
     user_dir = f"{parent_dir}/user"
-    if not args.check_only:
-        CheckUserDirectory(user_dir, args.verbose)
-    cmd_status_list = FetchCommandFileStatusMap(user_dir)
-    for group in cmd_status_list:
-        if not CheckAvailability(user_dir, group):
-            cmd_status_list[group].availability = CommandAvailability.Broken
 
     json_file_path = f"{parent_dir}/commands.json"
     if args.json:
         json_file_path = args.json
-
     if not os.path.exists(json_file_path):
-        error_message = f"[ERROR] \033[31mNo input json.\033[0m\nPlease create \033[34m{json_file_path}\033[0m."
+        shutil.copyfile(f"{parent_dir}/src/commands.json", json_file_path)
+        error_message = f"[ERROR] \033[31mNo input json.\033[0m\n"
+        error_message += f"[INFO] Create \033[34m{json_file_path}\033[0m."
         sys.exit(error_message)
+
+    if not args.check_only:
+        CheckUserDirectory(user_dir, args.verbose)
+    cmd_status_list = FetchCommandFileStatusMap(user_dir)
+
+    for group in cmd_status_list:
+        if not CheckAvailability(user_dir, group):
+            cmd_status_list[group].availability = CommandAvailability.Broken
 
     json_load_list = LoadJsonFile(json_file_path)
     for json_load in json_load_list:
