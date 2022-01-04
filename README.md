@@ -11,7 +11,7 @@
 
 # Features
 
-- Provides git-like alias command/sub-command groupand their help by simple json file input.
+- Provides git-like alias command group and their help by simple json file input.
 - Provides zsh completer function simulteniously.
 
 # How to start
