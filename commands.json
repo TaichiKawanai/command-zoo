@@ -1,46 +1,41 @@
 [
   {
-    "group": "zcmd",
-    "description": "The commands provide git-command-like alias.\nThis is an example commands.",
-    "commands": [
+    "group": "mycmd",
+    "description": "[mycmd help description]",
+      "commands": [
       {
-        "cmd": "print",
-        "desc": "print message",
+        "cmd": "command_1",
+        "desc": "[command_1 help desc.]",
+        "line": "[command_1 alias line]"
+      },
+      {
+        "cmd": "command_2",
+        "desc": "[command_2 help desc.]",
         "line": "",
         "args": [
           {
-            "arg": "hello",
-            "desc": "",
-            "line": "echo 'hello!!'"
+            "arg": "argument_2a",
+            "desc": "[argument_2a help]",
+            "line": "[argument_2a alias line]"
           },
           {
-            "arg": "goodbye",
-            "desc": "",
-            "line": "echo 'goodbye!!'"
+            "arg": "argument_2b",
+            "desc": "[argument_2b help]",
+            "line": "[argument_2b alias line]"
           }
         ]
       },
       {
-        "cmd": "ls",
-        "desc": "show files",
-        "line": "",
+        "cmd": "command_3",
+        "desc": "[command_3 help desc.]",
+        "line": "[command_3 alias line]",
         "args": [
           {
-            "arg": "home",
-            "desc": "show files in home",
-            "line": "ls -la ~/"
-          },
-          {
-            "arg": "document",
-            "desc": "show files in documents",
-            "line": "ls -la ~/Documents/"
+            "arg": "argument_3a",
+            "desc": "[argument_3a help]",
+            "line": "[argument_3a alias line]"
           }
         ]
-      },
-      {
-        "cmd": "help",
-        "desc": "show help",
-        "line": "zcmd -h"
       }
     ]
   }

@@ -93,7 +93,7 @@ def IsJson(json_str):
 
 def LoadJsonFile(command_list_json):
     if not IsJson(command_list_json):
-        error_message = f"'\033[34m{command_list_json}\033[0m' is not json format. \n"
+        error_message = f"\033[31m{command_list_json} is not json format.\033[0m \n"
         error_message += f"Please fix \033[34m{command_list_json}\033[34m."
         sys.exit(error_message)
     json_open = open(command_list_json, "r")
@@ -205,12 +205,12 @@ def GenerateTargetCommand(group, src_dir, user_dir, json_load):
         if CheckAvailability(user_dir, group):
             print(f"[INFO] \033[33mNo change.\033[0m\n")
         else:
-            print(f"[\033[31mERROR\033[0m] Existent command is invalid: {group_bold}.\n")
+            print(f"[WARNING] \033[33mExistent command is invalid\033[0m: {group_bold}.\n")
     else:
         if CheckAvailability(user_dir, group):
             print(f"[INFO] \033[36mComplete.\033[0m\n")
         else:
-            print(f"[\033[31mERROR\033[0m] Failed to generate command: {group_bold}.\n")
+            print(f"[WARNING] \033[33mFailed to generate command\033[0m: {group_bold}.\n")
     return is_generated
 
 def EraceTargetCommand(group, user_dir):
@@ -358,16 +358,20 @@ def main():
             cmd_status_list[group].availability = CommandAvailability.Broken
 
     json_file_path = f"{parent_dir}/commands.json"
+    if not os.path.exists(json_file_path):
+        error_message = f"[ERROR] \033[31mNo input json.\033[0m\nPlease create \033[34m{json_file_path}\033[0m."
+        sys.exit(error_message)
+
     json_load_list = LoadJsonFile(json_file_path)
     for json_load in json_load_list:
         if not "group" in json_load:
-            error_message = f"An item with no group exists in json input. \nPlease fix \033[34m{json_file_path}\033[0m."
+            error_message = f"[ERROR] \033[31mAn item with no group exists in json input.\033[0m \nPlease fix \033[34m{json_file_path}\033[0m."
             sys.exit(error_message)
 
         group = json_load["group"]
 
         if not "commands" in json_load or not json_load["commands"]:
-            error_message = f"No commands in {group}. \nPlease fix \033[34m{json_file_path}\033[0m."
+            error_message = f"[ERROR] \033[31mNo commands in {group}.\033[0m \nPlease fix \033[34m{json_file_path}\033[0m."
             sys.exit(error_message)
 
         is_existing = group in cmd_status_list

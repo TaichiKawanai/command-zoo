@@ -1,1 +1,174 @@
 # gen-cmd-group
+
+
+
+- [Features](#features)
+- [How to start](#how-to-start)
+- [Usage](#usage)
+  - [Command structure](#command-structure)
+  - [Example of input json file](#example-of-input-json-file)
+  - [Handle commnad group](#handle-commnad-group)
+
+# Features
+
+- Provides git-like alias command/sub-command groupand their help by simple json file input.
+- Provides zsh completer function simulteniously.
+
+# How to start
+
+1. Edit input json file `commands.json`. Details are shown in below.
+2. Run `gen_command.py`, which *python3.8* is required.
+3. Export path of command group directory to `PATH` (optional, but highly recommended)
+3. Export path of zsh functions directory to `fpath` (optional, if you use *zsh*)
+
+# Usage
+
+## Command structure
+
+Command group has tree category items of `group`, `command`, and `argument` as:
+
+<pre>
+group
+ ├── command
+ │   ├── argument
+ │   ├── argument
+ │   └── ..
+ ├── command
+ ├──   ..
+</pre>
+
+
+## Example of input json file
+
+For example, `mycmd` command includes the following commands and arguments.
+
+| command | alias |
+| ------------- | ------------- |
+| `mycmd command_1`  | [command_1 alias line]  |
+| `mycmd command_2 argument_2a`  | [argument_2a alias line]  |
+| `mycmd command_2 argument_2b`  | [argument_2b alias line]  |
+| `mycmd command_3`  | [argument_3 alias line]  |
+| `mycmd command_3 argument_3a`  | [argument_3a alias line]  |
+
+A json file `commands.json` for example command `mycmd` is written as:
+
+```json
+[
+  {
+    "group": "mycmd",
+    "description": "[mycmd help description]",
+      "commands": [
+      {
+        "cmd": "command_1",
+        "desc": "[command_1 help desc.]",
+        "line": "[command_1 alias line]"
+      },
+      {
+        "cmd": "command_2",
+        "desc": "[command_2 help desc.]",
+        "line": "",
+        "args": [
+          {
+            "arg": "argument_2a",
+            "desc": "[argument_2a help]",
+            "line": "[argument_2a alias line]"
+          },
+          {
+            "arg": "argument_2b",
+            "desc": "[argument_2b help]",
+            "line": "[argument_2b alias line]"
+          }
+        ]
+      },
+      {
+        "cmd": "command_3",
+        "desc": "[command_3 help desc.]",
+        "line": "[command_3 alias line]",
+        "args": [
+          {
+            "arg": "argument_3a",
+            "desc": "[argument_3a help]",
+            "line": "[argument_3a alias line]"
+          }
+        ]
+      }
+    ]
+  },
+  {
+     .... second command group ....
+  }
+  ....
+]
+
+```
+
+The example command of `mycmd` give help description with `-h` option as:
+
+
+```
+usage: mycmd [-h] [-s] [command] [argument [argument ...]]
+
+[mycmd help description]
+Load from commands/user/json/mycmd.json.
+
+positional arguments:
+  command     a mycmd command
+  argument    an argument for each mycmd command
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -s, --show  only show command line
+
+command list with argument:
+1) command_1 ([command_1 help desc.])    --> [command_1 alias line]
+
+2) command_2 ([command_2 help desc.])
+   ├── argument_2a  [argument_2a help]   --> [argument_2a alias line]
+   └── argument_2b  [argument_2b help]   --> [argument_2b alias line]
+
+3) command_3 ([command_3 help desc.])    --> [command_3 alias line]
+   └── argument_3a  [argument_3a help]   --> [argument_3a alias line]
+```
+
+The example command of `mycmd` also give zsh completer as:
+
+```
+$mycmd [tab]
+command_1  --> [command_1 help desc.]
+command_2  --> [command_2 help desc.]
+command_3  --> [command_3 help desc.]
+```
+
+```
+mycmd command_2 [tab]
+argument_2a  argument_2b
+```
+
+## Handle commnad group
+
+1. Generate and Update commnads
+   ```sh
+   ./gen_commands.py
+   ```
+
+2. Remove commands
+
+    After editing to remove unnecessary from `commands.json`, and then run,
+    ```sh
+    ./gen_commands.py -r
+    ```
+
+3. Check command lists and status
+   ```sh
+   ./gen_commands.py -c
+   ```
+   It gives summary of status as:
+
+       (avalable)  (config)    (state)
+       mycmd           OK          OK          no change   
+
+       export PATH      : OK
+       export zsh fpath : OK
+
+
+Please run `./gen_commands.py -h` for more details.
