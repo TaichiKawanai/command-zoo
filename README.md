@@ -23,7 +23,7 @@
 4. Export path of command group directory to `PATH` (optional, but highly recommended)
 5. Export path of zsh functions directory to `fpath` (optional, if you use *zsh*)
 
-*`gen_command.py` requires *python3.8*.
+*`gen_command.py` requires *python3.9*.
 
 # Usage
 
