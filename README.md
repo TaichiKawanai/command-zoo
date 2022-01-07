@@ -17,13 +17,13 @@
 
 # How to start
 
-1. Run `gen_command.py` to generate initial input json file: `commands.json`.
+1. Run `command-zoo.py` to generate initial input json file: `commands.json`.
 2. Edit `commands.json`. Details are shown in below.
-3. Run `gen_command.py` to generate execution files.
+3. Run `command-zoo.py` to generate execution files.
 4. Export path of command group directory to `PATH` (optional, but highly recommended)
 5. Export path of zsh functions directory to `fpath` (optional, if you use *zsh*)
 
-*`gen_command.py` requires *python3.9*.
+*`command-zoo.py` requires *python3.9*.
 
 # Usage
 
@@ -152,19 +152,19 @@ argument_2a  argument_2b
 
 1. Generate and Update commnads
    ```sh
-   ./gen_commands.py
+   ./command-zoo.py
    ```
 
 2. Remove commands
 
     After editing to remove unnecessary from `commands.json`, and then run,
     ```sh
-    ./gen_commands.py -r
+    ./command-zoo.py -r
     ```
 
 3. Check command lists and status
    ```sh
-   ./gen_commands.py -c
+   ./command-zoo.py -c
    ```
    It gives summary of status as:
 
@@ -175,8 +175,8 @@ argument_2a  argument_2b
        export zsh fpath : OK
 
 
-Please run `./gen_commands.py -h` for more details.
+Please run `./command-zoo.py -h` for more details.
 
 ## Uninstall command group
-1. Run `./gen_commands.py --uninstall` to remove user directory.
+1. Run `./command-zoo.py --uninstall` to remove user directory.
 2. Unexport `Path` and `fpath`.
