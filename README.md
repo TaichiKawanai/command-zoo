@@ -1,6 +1,4 @@
-# gen-cmd-group
-
-
+# command-zoo
 
 - [Features](#features)
 - [How to start](#how-to-start)
