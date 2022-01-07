@@ -1,0 +1,39 @@
+[
+  {
+    "group": "cmdz",
+    "description": "a sample of example",
+      "commands": [
+      {
+        "cmd": "open",
+        "desc": "Open anything.",
+        "line": "gnome-open",
+        "args": [
+          {
+            "arg": "chrome",
+            "desc": "Google Chrome",
+            "line": "chromium-browser"
+          },
+          {
+            "arg": "edit",
+            "desc": "Edit",
+            "line": "gedit"
+          }
+        ]
+      },
+      {
+        "cmd": "browse",
+        "desc": "browse favorite",
+        "args": [
+          {
+            "arg": "google.com",
+            "line": "chromium-browser https://www.google.com/"
+          },
+          {
+            "arg": "github.com",
+            "line": "chromium-browser https://github.com/"
+          }
+        ]
+      }
+    ]
+  }
+]
