@@ -1,6 +1,7 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 
 import argparse
+import clipboard
 import difflib
 import json
 import os
@@ -31,6 +32,13 @@ def AplyArgParser(group, desc, help_epilog_str, json_file_path):
         action="store_true",
         required=False,
         help="only show command line",
+    )
+    argparser.add_argument(
+        "-c",
+        "--copy",
+        action="store_true",
+        required=False,
+        help="only show and copy to clipboard",
     )
     return argparser
 
@@ -181,6 +189,9 @@ def main():
             cmd_line_with_arg += " " + arg
         if params.show:
             print(cmd_line_with_arg)
+        elif params.copy:
+            print(cmd_line_with_arg)
+            clipboard.copy(cmd_line_with_arg)
         else:
             sh_cmd = [cmd_line_with_arg]
             subprocess.run(sh_cmd, shell=True)
@@ -216,6 +227,9 @@ def main():
 
     if params.show:
         print(cmd_line_with_arg)
+    elif params.copy:
+        print(cmd_line_with_arg)
+        clipboard.copy(cmd_line_with_arg)
     else:
         sh_cmd = [cmd_line_with_arg]
         subprocess.run(sh_cmd, shell=True)

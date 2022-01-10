@@ -245,7 +245,7 @@ def GenerateTargetCommand(group, src_dir, user_dir, json_load):
 
 def EraceTargetCommand(group, user_dir):
     print(f"[INFO] Remove {group}")
-    if os.path.exists(f"{user_dir}/{group}"):
+    if os.path.lexists(f"{user_dir}/{group}"):
         os.remove(f"{user_dir}/{group}")
     if os.path.exists(f"{user_dir}/json/{group}.json"):
         os.remove(f"{user_dir}/json/{group}.json")
