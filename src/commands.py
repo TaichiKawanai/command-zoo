@@ -69,6 +69,42 @@ def GetSimilarOne(target, lists):
     return candidates[:max_to_show_similar_args]
 
 
+def GetHelpString(commands):
+    help_epilog_str = "command list with argument:\n"
+
+    max_arg = 0
+    max_desc = 0
+    for cmd_k, cmd_v in commands.items():
+        cmd_args = cmd_v[2]
+        for arg_k in cmd_args:
+            max_arg = max([max_arg, len(arg_k)])
+        for arg_v in cmd_args.values():
+            max_desc = max([max_desc, len(arg_v[0])])
+
+    for cmd_k, cmd_v in commands.items():
+        cmd_desc = cmd_v[0]
+        cmd_line = cmd_v[1]
+        cmd_args = cmd_v[2]
+        temp_str = cmd_k
+        if cmd_desc:
+            temp_str += f" ({cmd_desc})"
+        help_epilog_str += f"{list(commands.keys()).index(cmd_k) + 1}) {temp_str:{max_arg + max_desc + 9}}"
+        if cmd_line:
+            help_epilog_str += f"--> {cmd_line}\n"
+        else:
+            help_epilog_str += "\n"
+
+        for arg_k, arg_v in cmd_args.items():
+            if list(cmd_args.keys()).index(arg_k) + 1 != len(cmd_args.items()):
+                tree_str = "├──"
+            else:
+                tree_str = "└──"
+            help_epilog_str += f"   {tree_str} {arg_k:{max_arg + 2}}{arg_v[0]:{max_desc + 2}} --> {arg_v[1]}\n"
+        help_epilog_str += "\n"
+
+    return help_epilog_str
+
+
 def ReadCommandSetting(command_list_json):
     if not IsJson(command_list_json):
         error_message = f"'{command_list_json}' is not json format. \nPlease fix {command_list_json}."
@@ -91,6 +127,8 @@ def ReadCommandSetting(command_list_json):
         sys.exit(error_message)
 
     commands = {}
+    commands["help"] = "show help", "", {}
+
     for command_elem in json_load["commands"]:
         args = {}
         if "args" in command_elem.keys():
@@ -118,37 +156,7 @@ def ReadCommandSetting(command_list_json):
                 continue
             commands[cmd] = command_elem_desc, command_elem_line, args
 
-    help_epilog_str = "command list with argument:\n"
-
-    max_arg = 0
-    max_desc = 0
-    for cmd_k, cmd_v in commands.items():
-        cmd_args = cmd_v[2]
-        for arg_k in cmd_args:
-            max_arg = max([max_arg, len(arg_k)])
-        for arg_v in cmd_args.values():
-            max_desc = max([max_desc, len(arg_v[0])])
-
-    for cmd_k, cmd_v in commands.items():
-        cmd_desc = cmd_v[0]
-        cmd_line = cmd_v[1]
-        cmd_args = cmd_v[2]
-        temp_str = f"{cmd_k}"
-        if cmd_desc:
-            temp_str += f" ({cmd_desc})"
-        help_epilog_str += f"{list(commands.keys()).index(cmd_k) + 1}) {temp_str:{max_arg + max_desc + 9}}"
-        if cmd_line:
-            help_epilog_str += f"--> {cmd_line}\n"
-        else:
-            help_epilog_str += "\n"
-
-        for arg_k, arg_v in cmd_args.items():
-            if list(cmd_args.keys()).index(arg_k) + 1 != len(cmd_args.items()):
-                tree_str = "├──"
-            else:
-                tree_str = "└──"
-            help_epilog_str += f"   {tree_str} {arg_k:{max_arg + 2}}{arg_v[0]:{max_desc + 2}} --> {arg_v[1]}\n"
-        help_epilog_str += "\n"
+    help_epilog_str = GetHelpString(commands)
     return commands, group, discription, help_epilog_str
 
 
@@ -168,8 +176,17 @@ def main():
     params = argparser.parse_args()
 
     if not params.command:
-        error_message = argparser.format_help()
-        sys.exit(error_message)
+        help_message = argparser.format_help()
+        print(help_message)
+        sys.exit(0)
+    elif params.command == "help":
+        if params.argument and params.argument[0] in commands.keys():
+            commands_tmp = {params.argument[0]: commands[params.argument[0]]}
+            help_message = GetHelpString(commands_tmp)
+        else:
+            help_message = argparser.format_help()
+        print(help_message)
+        sys.exit(0)
     elif params.command not in commands.keys():
         error_message = f"{group}: '{params.command}' is not a {group} command. See '{group} --help'.\n\n"
         error_message += "The most similar commands are\n"

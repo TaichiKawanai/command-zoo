@@ -15,7 +15,10 @@ function _{{group}} () {
 
     case $state in
         (args)
-            case $words[2] in{% for val in commands %}
+            case $words[2] in
+                help)
+                    _arguments -C '*: :({% for val in commands %}{{val["cmd"]}} {% endfor %})'
+                ;;{% for val in commands %}
                 {{val["cmd"]}})
                         {% if val["args"]  %}_arguments -C '*: :({% for arg_v in val["args"] %}{{arg_v["arg"]}} {% endfor %})' && {% endif %}\
                         {% if val["line"]  %}_files -W `pwd`/ && {% endif %}\
@@ -33,7 +36,8 @@ function _{{group}} () {
 
 __{{group}}_commands () {
     local -a _c
-    _c=({% for val in commands %}
+    _c=('help:show help'
+        {% for val in commands %}
         '{{val["cmd"]}}:{% if val["desc"]  %}{{val["desc"]}}{% else %}perform {{val["cmd"]}}{% endif %}'{% endfor %}
     )
 
