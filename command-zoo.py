@@ -11,9 +11,10 @@ from enum import Enum, auto
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from subprocess import PIPE
+from typing import Any
 
 
-def ParseArgs():
+def ParseArgs() -> Any:
     argparser = argparse.ArgumentParser(
         prog="generate_commands",
         description="",
@@ -96,7 +97,7 @@ class CommandFileStatus:
     has_config = False
 
 
-def IsJson(json_str):
+def IsJson(json_str: str) -> bool:
     file_open = open(json_str, "r")
     try:
         json_obj = json.loads(file_open.read())
@@ -105,7 +106,7 @@ def IsJson(json_str):
     return True
 
 
-def LoadJsonFile(command_list_json):
+def LoadJsonFile(command_list_json: Any) -> Any:
     if not IsJson(command_list_json):
         error_message = f"\033[31m{command_list_json} is not json format.\033[0m \n"
         error_message += f"Please fix \033[34m{command_list_json}\033[0m.\n"
@@ -123,7 +124,7 @@ def LoadJsonFile(command_list_json):
     return json_load_list
 
 
-def yes_or_no(ask_str):
+def yes_or_no(ask_str: str) -> bool:
     while True:
         choice = input(f"{ask_str} [y/N]: ").lower()
         if choice in ["y", "ye", "yes"]:
@@ -134,7 +135,7 @@ def yes_or_no(ask_str):
             return False
 
 
-def CheckUserDirectory(user_dir, verbose):
+def CheckUserDirectory(user_dir: str, verbose: bool) -> None:
     if not os.path.isdir(user_dir):
         print(f"[INFO] mkdir \033[34m{os.path.abspath(user_dir)}\033[0m")
         os.makedirs(user_dir)
@@ -159,7 +160,7 @@ def CheckUserDirectory(user_dir, verbose):
     return
 
 
-def CheckAvailability(user_dir, group):
+def CheckAvailability(user_dir: str, group: str) -> bool:
     if os.path.exists(f"{user_dir}/{group}"):
         if os.path.exists(f"{user_dir}/json/{group}.json"):
             if os.path.exists(f"{user_dir}/zsh_func/_{group}"):
@@ -167,7 +168,7 @@ def CheckAvailability(user_dir, group):
     return False
 
 
-def FetchCommandFileStatusMap(user_dir):
+def FetchCommandFileStatusMap(user_dir: str) -> Any:
     cmd_status_list = {}
     for file_path in list(Path(user_dir).glob("*")):
         if os.path.isdir(file_path):
@@ -178,7 +179,7 @@ def FetchCommandFileStatusMap(user_dir):
     return cmd_status_list
 
 
-def LinkExecuteFile(src_dir, user_exec_link_file):
+def LinkExecuteFile(src_dir: str, user_exec_link_file: str) -> bool:
     if os.path.exists(user_exec_link_file):
         link_path_old = os.readlink(user_exec_link_file)
         if link_path_old == f"{src_dir}/commands.py":
@@ -188,7 +189,7 @@ def LinkExecuteFile(src_dir, user_exec_link_file):
     return True
 
 
-def DumpCommandJson(json_load, user_json_file):
+def DumpCommandJson(json_load: Any, user_json_file: str) -> bool:
     if os.path.exists(user_json_file):
         json_load_old = LoadJsonFile(user_json_file)
         if json_load_old == json_load:
@@ -199,7 +200,9 @@ def DumpCommandJson(json_load, user_json_file):
     return True
 
 
-def GenerateZshFunction(src_dir, group, json_load, user_zsh_func_file):
+def GenerateZshFunction(
+    src_dir: str, group: str, json_load: Any, user_zsh_func_file: str
+) -> bool:
     env = Environment(loader=FileSystemLoader(str(src_dir)))
     template = env.get_template(f"zsh_func.tpl")
     zsh_func = template.render({"group": group, "commands": json_load["commands"]})
@@ -216,7 +219,9 @@ def GenerateZshFunction(src_dir, group, json_load, user_zsh_func_file):
     return True
 
 
-def GenerateTargetCommand(group, src_dir, user_dir, json_load):
+def GenerateTargetCommand(
+    group: str, src_dir: str, user_dir: str, json_load: Any
+) -> bool:
     group_bold = f"\033[1m{group}\033[0m"
     print(f"[INFO] Generate command group: {group_bold}")
     is_generated = False
@@ -243,7 +248,7 @@ def GenerateTargetCommand(group, src_dir, user_dir, json_load):
     return is_generated
 
 
-def EraceTargetCommand(group, user_dir):
+def EraceTargetCommand(group: str, user_dir: str) -> None:
     print(f"[INFO] Remove {group}")
     if os.path.lexists(f"{user_dir}/{group}"):
         os.remove(f"{user_dir}/{group}")
@@ -254,7 +259,7 @@ def EraceTargetCommand(group, user_dir):
     return
 
 
-def ShowCommandGenerationResult(cmd_status_list, verbose):
+def ShowCommandGenerationResult(cmd_status_list: Any, verbose: bool) -> None:
     generated_cmd_list = []
     for group, cmd_status in cmd_status_list.items():
         if cmd_status.availability == CommandAvailability.Available:
@@ -273,9 +278,10 @@ def ShowCommandGenerationResult(cmd_status_list, verbose):
         print(f"       ==> \033[1m{cmds_str}\033[0m\n")
     elif verbose:
         print("[INFO] Nothing to generate.\n")
+    return
 
 
-def ShowCommandFileStatusListSummary(cmd_status_list):
+def ShowCommandFileStatusListSummary(cmd_status_list: Any) -> Any:
     cmd_status_label_str = (
         "               " + "(avalable)  " + "(config)    " + "(state)"
     )
@@ -321,7 +327,7 @@ def ShowCommandFileStatusListSummary(cmd_status_list):
     return
 
 
-def ShowPathSettingSummary(is_ok_PATH, is_ok_fpath):
+def ShowPathSettingSummary(is_ok_PATH: bool, is_ok_fpath: bool) -> None:
     path_str = "\033[32mOK\033[0m" if is_ok_PATH else "\033[31mX\033[0m"
     fpath_str = "\033[32mOK\033[0m" if is_ok_fpath else "\033[31mX\033[0m"
     print(f"export PATH      : {path_str}")
@@ -329,12 +335,12 @@ def ShowPathSettingSummary(is_ok_PATH, is_ok_fpath):
     return
 
 
-def CheckEnvPath(user_dir):
+def CheckEnvPath(user_dir: str) -> bool:
     is_ok_PATH = user_dir in str(os.environ.get("PATH"))
     return is_ok_PATH
 
 
-def CheckZshFPATH(user_dir, src_dir):
+def CheckZshFPATH(user_dir: str, src_dir: str) -> bool:
     is_ok_fpath = False
     if "zsh" in str(os.environ.get("SHELL")):
         proc = subprocess.run(
@@ -350,7 +356,9 @@ def CheckZshFPATH(user_dir, src_dir):
     return is_ok_fpath
 
 
-def ShowSettingRecommendation(is_ok_PATH, is_ok_fpath, user_dir):
+def ShowSettingRecommendation(
+    is_ok_PATH: str, is_ok_fpath: bool, user_dir: str
+) -> None:
     if not is_ok_PATH or not is_ok_fpath:
         print("[INFO] One more step!!!")
 
@@ -366,7 +374,7 @@ def ShowSettingRecommendation(is_ok_PATH, is_ok_fpath, user_dir):
     return
 
 
-def ShowCommandHelp(cmd_status_list, user_dir):
+def ShowCommandHelp(cmd_status_list: Any, user_dir: str) -> None:
     for group in sorted(cmd_status_list.keys()):
         if cmd_status_list[group].availability == CommandAvailability.Available:
             group_bold = f"\033[1m{group}\033[0m"
@@ -376,7 +384,7 @@ def ShowCommandHelp(cmd_status_list, user_dir):
     return
 
 
-def main():
+def main() -> int:
     args = ParseArgs()
     if args.show_commands:
         args.check_only = True

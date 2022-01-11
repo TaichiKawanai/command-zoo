@@ -9,9 +9,12 @@ import pathlib
 import subprocess
 import sys
 from subprocess import PIPE
+from typing import Any
 
 
-def AplyArgParser(group, desc, help_epilog_str, json_file_path):
+def AplyArgParser(
+    group: str, desc: str, help_epilog_str: str, json_file_path: str
+) -> Any:
     desc_str = "The command {group} provides git-command-like alias.\n"
     if desc:
         desc_str = f"{desc}\n"
@@ -43,7 +46,7 @@ def AplyArgParser(group, desc, help_epilog_str, json_file_path):
     return argparser
 
 
-def IsJson(json_str):
+def IsJson(json_str: str) -> bool:
     file_open = open(json_str, "r")
     try:
         json_obj = json.loads(file_open.read())
@@ -52,12 +55,11 @@ def IsJson(json_str):
     return True
 
 
-def GetSimilarOne(target, lists):
+def GetSimilarOne(target: str, lists: Any) -> Any:
     candidates_with_score = {}
     for cmd in lists:
         is_similar = False
         score = difflib.SequenceMatcher(None, target, cmd).ratio()
-        # print(target, cmd, score)
         if score > 0.2:
             candidates_with_score[score] = cmd
 
@@ -69,7 +71,7 @@ def GetSimilarOne(target, lists):
     return candidates[:max_to_show_similar_args]
 
 
-def GetHelpString(commands):
+def GetHelpString(commands: Any) -> str:
     help_epilog_str = "command list with argument:\n"
 
     max_arg = 0
@@ -105,7 +107,7 @@ def GetHelpString(commands):
     return help_epilog_str
 
 
-def ReadCommandSetting(command_list_json):
+def ReadCommandSetting(command_list_json: Any) -> Any:
     if not IsJson(command_list_json):
         error_message = f"'{command_list_json}' is not json format. \nPlease fix {command_list_json}."
         sys.exit(error_message)
@@ -160,7 +162,7 @@ def ReadCommandSetting(command_list_json):
     return commands, group, discription, help_epilog_str
 
 
-def main():
+def main() -> int:
     # home_dir = os.path.expanduser("~")
     json_parent = pathlib.Path(f"{__file__}").parent
     json_stem = pathlib.Path(f"{__file__}").stem
